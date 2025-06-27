@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component xmlns="http://www.opensource-socialnetwork.org/v/3.0">
+    <name>Home Page Posts</name>
+    <id>HomePagePosts</id>
+    <description>Allows users to choose whether the homepage shows public posts, friends only, liked, or their liked posts.</description>
+    <author>Rafael Amorim &amp; Eric Redegeld</author>
+    <license>OSSN v4</license>
+    <author_url>https://www.rafaelamorim.com.br/, https://nlsociaal.nl</author_url>
+    <license_url>http://www.opensource-socialnetwork.org/licence</license_url>
+    <version>7.0</version>
+
+    <requires>
+        <type>ossn_version</type>
+        <version>8.1</version>
+    </requires>
+    <requires>
+        <type>ossn_component</type>
+        <name>OssnWall</name>
+        <version>6.1</version>
+    </requires>
+</component>
