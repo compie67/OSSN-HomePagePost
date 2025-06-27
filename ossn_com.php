@@ -1,87 +1,84 @@
 <?php
 /**
- * Open Source Social Network
+ * HomePagePosts - Tijdlijnfilters voor OSSN Homepagina
  *
  * @package   HomePagePosts
- * @author    Rafael Amorim <amorim@rafaelamorim.com.br>
- * @adjustment and tweaking Eric Redegeld nlsociaal.nlsociaal
- * @copyright (c) Rafael Amorim
- * @license   General Public Licence http://www.opensource-socialnetwork.org/licence
- * @link      https://www.rafaelamorim.com.br/
- *
+ * @author    Rafael Amorim / aangepast door Eric Redegeld (nlsociaal.nl)
+ * @copyright (c) Rafael Amorim & Eric Redegeld
+ * @license   GNU General Public License http://www.opensource-socialnetwork.org/licence
  */
- 
 
+// Initialisatie van de component
 function homePagePosts_init() {
     if (ossn_isLoggedin()) {
-        // Voeg fontawesome-iconen toe (voor de knoppen)
-        ossn_extend_view('ossn/site/head', 'css/fontawesome');
-
-        // Voeg de filterbalk toe aan de footer (mobiele tijdlijnnavigatie)
-        ossn_extend_view('ossn/page/footer', 'wall/filterbar');
-        
-        // altijd zichtbaar
+        // ✅ Laad CSS/JS voor filterknoppen
         ossn_extend_view('ossn/site/head', 'js/homepageposts');
+        ossn_extend_view('ossn/site/head', 'css/fontawesome');
+        ossn_extend_view('ossn/page/footer', 'wall/filterbar');
 
+        // ✅ Registreer paginahandlers voor de filtertypes
+        ossn_register_page('public', 'wall_public_page_handler');
+        ossn_register_page('friends', 'wall_friends_page_handler');
+        ossn_register_page('liked', 'wall_liked_page_handler');
 
-        // Verwijder originele comment:load callback (bugfix)
-        global $OssnCallbacks;
-        if (isset($OssnCallbacks['comment']['load'])) {
-            foreach ($OssnCallbacks['comment']['load'] as $index => $cb) {
-                if (is_array($cb['callback']) && isset($cb['callback'][0]) && $cb['callback'][0] instanceof OssnComments) {
-                    unset($OssnCallbacks['comment']['load'][$index]);
-                }
-            }
+        // De volgende twee zijn uitgefaseerd, maar kunnen later worden heringeschakeld:
+        // ossn_register_page('likedmine', 'wall_likedmine_page_handler');
+        // ossn_register_page('comments', 'wall_comments_page_handler');
+    }
+}
+
+// ✅ Haalt standaardfilter van gebruiker op (wordt nu niet meer gebruikt door ons)
+function hpage_posts_get_homepage_wall_access() {
+    if (!OssnSession::isSession('com_wall_type_access')) {
+        $data = ossn_get_entities([
+            'type'       => 'component',
+            'subtype'    => 'ossnwall_defaultwall',
+            'owner_guid' => 2,
+        ]);
+
+        if ($data) {
+            OssnSession::assign('com_wall_type_access', $data[0]->value);
+            return $data[0]->value;
+        } else {
+            OssnSession::assign('com_wall_type_access', 'public');
+            return 'public';
         }
-
-        // Voeg onze eigen veilige callback toe
-        ossn_register_callback('comment', 'load', 'home_page_posts_comment_menu_fix', 1);
+    } else {
+        return OssnSession::getSession('com_wall_type_access');
     }
 }
 
-/**
- * Eigen veilige versie van de comment menu callback
- */
-function home_page_posts_comment_menu_fix($name, $type, $params) {
-    if (!is_array($params)) {
-        $params = get_object_vars($params);
-    }
-
-    if (empty($params['id'])) {
-        return;
-    }
-
-    $OssnComment = new OssnComments();
-    $comment = $OssnComment->getComment($params['id']);
-
-    if (!$comment || $comment->type !== 'comments:entity') {
-        return;
-    }
-
-    $user = ossn_loggedin_user();
-    $entity = ossn_get_entity($comment->subject_guid);
-    $entity_object = false;
-
-    if ($entity && $entity->type == 'object') {
-        $entity_object = ossn_get_object($entity->owner_guid);
-    }
-
-    if (
-        $user->guid == $params['owner_guid'] ||
-        ossn_isAdminLoggedin() ||
-        ($entity && $entity->type == 'user' && $user->guid == $entity->owner_guid) ||
-        ($entity_object && $user->guid == $entity_object->owner_guid)
-    ) {
-        ossn_unregister_menu('delete', 'comments');
-        ossn_register_menu_item('comments', array(
-            'name'     => 'delete',
-            'href'     => ossn_site_url("action/delete/comment?comment={$params['id']}", true),
-            'class'    => 'dropdown-item ossn-delete-comment',
-            'text'     => ossn_print('comment:delete'),
-            'priority' => 200,
-        ));
+// ✅ Backward compatibility fallback
+if (!function_exists('ossn_get_homepage_wall_access')) {
+    function ossn_get_homepage_wall_access() {
+        return hpage_posts_get_homepage_wall_access();
     }
 }
 
-// Init component
+// ✅ Paginahandlers die de gekozen filter in de sessie opslaan en terug redirecten naar vorige pagina
+function wall_public_page_handler() {
+    OssnSession::assign('com_wall_type_access', 'public');
+    redirect(REF);
+}
+function wall_friends_page_handler() {
+    OssnSession::assign('com_wall_type_access', 'friends');
+    redirect(REF);
+}
+function wall_liked_page_handler() {
+    OssnSession::assign('com_wall_type_access', 'liked');
+    redirect(REF);
+}
+// Deze zijn uitgeschakeld maar kunnen later worden heringeschakeld
+/*
+function wall_likedmine_page_handler() {
+    OssnSession::assign('com_wall_type_access', 'liked_mine');
+    redirect(REF);
+}
+function wall_comments_page_handler() {
+    OssnSession::assign('com_wall_type_access', 'comments');
+    redirect(REF);
+}
+*/
+
+// ✅ Registratie van de init-functie
 ossn_register_callback('ossn', 'init', 'homePagePosts_init');
