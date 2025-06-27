@@ -4,6 +4,7 @@ This component enhances the NewsFeed experience by allowing users to **filter** 
 
 ## 🔍 Features
 
+Changes made by compie67
 - Always-visible filter bar with icons
 - Show timeline posts by:
   - 🌐 Public (all users)
@@ -13,6 +14,7 @@ This component enhances the NewsFeed experience by allowing users to **filter** 
 - Admins see all posts by default
 - Fully compatible with OSSN v6+ and OSSN v8+
 
+Original option
 ![Screenshot](https://www.rafaelamorim.com.br/temp/homepageposts.png)
 
 ## ⚠️ Compatibility
